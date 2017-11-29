@@ -7,7 +7,6 @@ from db.repository import ArtistRepository
 from db.repository import SongRepository
 
 
-
 def create_recommended_playlist(api):
     songs = SongRepository.find_all()
     song_map = {}
@@ -48,7 +47,7 @@ def create_recommended_playlist(api):
                 koef = 1.25
             else:
                 koef = 2.25
-            related_score[id2] += artist_score[id1] / koef / len(links)
+            related_score[id2] += artist_score[id1] / koef / len(links) / 1.5
             i += 1
     for artist_id, score in related_score.items():
         artist_score[artist_id] += score
@@ -82,6 +81,22 @@ def create_recommended_playlist(api):
     choosen_song_list = list(choosen_songs)
     random.shuffle(choosen_song_list)
     api.add_songs_to_playlist(playlist_id, choosen_song_list[0:300])
+
+
+def create_artist_playlist(api, artist_id, include_related_artists):
+    all_songs = SongRepository.find_all()
+    artist = ArtistRepository.find_one(artist_id)
+    if include_related_artists:
+        google_id_id_map = ArtistRepository.get_google_id_id_map()
+        related_artists =\
+            [google_id_id_map[google_id] for google_id in ArtistRepository.get_related_artists()[artist.google_id]]
+        songs = [song for song in all_songs if song.artist_id in related_artists or song.artist_id == artist_id]
+    else:
+        songs = [song for song in all_songs if song.artist_id == artist_id]
+    song_ids = [song.google_id for song in songs]
+    random.shuffle(song_ids)
+    playlist_id = api.create_playlist(artist.name + " " + date.today().isoformat())
+    api.add_songs_to_playlist(playlist_id, song_ids[0:300])
 
 
 def _get_playcount_history(periods=4):
