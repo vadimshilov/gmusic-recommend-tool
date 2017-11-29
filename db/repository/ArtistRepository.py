@@ -56,10 +56,10 @@ def save_many(artist_list):
         raise e
 
 
-def findOne(id):
+def find_one(id):
     cursor = get_cursor()
-    cursor.execute('SELECT id, google_id, name, load_albums_date FROM artist WHERE id = :id', {':id', id})
-    result = cursor.fetchOne()
+    cursor.execute('SELECT id, google_id, name, load_albums_date FROM artist WHERE id = :id', {'id': id})
+    result = cursor.fetchone()
     if result is None:
         return None
     return Artist(result[0], result[1], result[2], result[3])
@@ -119,8 +119,8 @@ def get_related_artists():
         google_id1 = record[0]
         google_id2 = record[1]
         if google_id1 not in result:
-            result[google_id1] = set()
-        result[google_id1].add(google_id2)
+            result[google_id1] = []
+        result[google_id1].append(google_id2)
     return result
 
 
