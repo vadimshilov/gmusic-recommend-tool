@@ -1,9 +1,15 @@
-from util.Singleton import Singleton
 import sqlite3
 from db.Migration import update_database_if_necessary
 
-@Singleton
+
 class Connection:
+    __instance = None
+
+    @staticmethod
+    def instance():
+        if Connection.__instance is None:
+            Connection.__instance = Connection()
+        return Connection()
 
     def __init__(self):
         self.connection = sqlite3.connect("db.db")
