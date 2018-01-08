@@ -42,11 +42,11 @@ def create_recommended_playlist(api):
             if id2 not in related_score:
                 continue
             if i * 3 < len(links):
-                koef = 0.75
+                koef = 1
             elif i * 3 < len(links):
-                koef = 1.25
+                koef = 1.5
             else:
-                koef = 2.25
+                koef = 2.75
             related_score[id2] += artist_score[id1] / koef / len(links) / 1.5
             i += 1
     for artist_id, score in related_score.items():
@@ -88,15 +88,40 @@ def create_artist_playlist(api, artist_id, include_related_artists):
     artist = ArtistRepository.find_one(artist_id)
     if include_related_artists:
         google_id_id_map = ArtistRepository.get_google_id_id_map()
-        related_artists =\
-            [google_id_id_map[google_id] for google_id in ArtistRepository.get_related_artists()[artist.google_id]]
-        songs = [song for song in all_songs if song.artist_id in related_artists or song.artist_id == artist_id]
+        all_related_artists = ArtistRepository.get_related_artists()
+        if artist.google_id in all_related_artists:
+            related_artists =\
+                [google_id_id_map[google_id] for google_id in all_related_artists[artist.google_id]
+                    if google_id in google_id_id_map]
+        else:
+            related_artists = []
+        artist_songs = {}
+        for song in all_songs:
+            if song.artist_id in related_artists or song.artist_id == artist_id:
+                if song.artist_id not in artist_songs.keys():
+                    artist_songs[song.artist_id] = []
+                artist_songs[song.artist_id].append(song.google_id)
+        song_lists = []
+        for song_list in artist_songs.values():
+            random.shuffle(song_list)
+            song_lists.append(song_list)
+        song_ids = []
+        for i in range(300):
+            ind1 = random.randint(0, len(song_lists) - 1)
+            ind2 = random.randint(0, len(song_lists[ind1]) - 1)
+            song_ids.append(song_lists[ind1][ind2])
+            song_lists[ind1].pop(ind2)
+            if len(song_lists[ind1]) == 0:
+                song_lists.pop(ind1)
+            if len(song_lists) == 0:
+                break
     else:
         songs = [song for song in all_songs if song.artist_id == artist_id]
-    song_ids = [song.google_id for song in songs]
-    random.shuffle(song_ids)
+        song_ids = [song.google_id for song in songs]
+        random.shuffle(song_ids)
+        song_ids = song_ids[0:min(300, len(song_ids))]
     playlist_id = api.create_playlist(artist.name + " " + date.today().isoformat())
-    api.add_songs_to_playlist(playlist_id, song_ids[0:300])
+    api.add_songs_to_playlist(playlist_id, song_ids)
 
 
 def _get_playcount_history(periods=4):
@@ -121,9 +146,9 @@ def _choose_song(songs):
     if len(songs) == 0:
         return None
     song_map = {songs[i].id: i for i in range(len(songs))}
-    known = [song.id for song in songs if song.playcount >= 12 or song.rate == 5]
-    unknown = [song.id for song in songs if song.playcount < 12 and song.rate != 5]
-    if random.random() < 0.6 and len(unknown) != 0 or len(known) == 0:
+    known = [song.id for song in songs if song.playcount >= 10 or song.rate == 5]
+    unknown = [song.id for song in songs if song.playcount < 10 and song.rate != 5]
+    if random.random() < 0.55 and len(unknown) != 0 or len(known) == 0:
         score = [2**(len(unknown) - i) for i in range(len(unknown))]
         song_list = unknown
     else:

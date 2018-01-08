@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import sys, traceback
 from ApiProvider import ApiProvider
 from PyQt5 import QtCore
 from PyQt5 import QtWidgets
@@ -28,9 +29,12 @@ class ArtistPlaylistWidget(QtWidgets.QWidget):
 
 
     def create_playlist_clicked(self):
-        index = self.artistList.currentIndex()
-        if index is not None:
-            api = ApiProvider.get_api()
-            RecommendationTool.create_artist_playlist(api, self.artistMap[index.data()], True)
+        try:
+            index = self.artistList.currentIndex()
+            if index is not None:
+                api = ApiProvider.get_api()
+                RecommendationTool.create_artist_playlist(api, self.artistMap[index.data()], True)
+        except Exception as e:
+            traceback.print_exc(file=sys.stdout)
 
 

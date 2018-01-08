@@ -81,7 +81,7 @@ def _should_load_albums(tracks):
         return False
     known_track_count = 0
     for track in tracks:
-        if track.playcount >= 12 or track.playcount == 5:
+        if track.playcount >= 10 or track.playcount == 5:
             known_track_count += 1
 
     return known_track_count * 2 >= len(tracks)
